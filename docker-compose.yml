@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: task-db
     volumes:
-      - postgres-data:/var/lib/postgres/data
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin" ]
       interval: 10s
@@ -41,63 +41,68 @@ services:
 
   gateway-service:
     container_name: gateway-service
-    image: aquaprodigy/tracker-gateway:latest   # ← было build:
+    image: danielasd23e2/tracker-gateway:latest   # ← было build:
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
   auth-service:
     container_name: auth-service
-    image: aquaprodigy/tracker-auth:latest
+    image: danielasd23e2/tracker-auth:latest
     env_file:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        - condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   task-service:
     container_name: task-service
-    image: aquaprodigy/tracker-task:latest
+    image: danielasd23e2/tracker-task:latest
     env_file:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        - condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   task-scheduler:
     container_name: task-scheduler
-    image: aquaprodigy/tracker-scheduler:latest
+    image: danielasd23e2/tracker-scheduler:latest
     env_file:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        - condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   email-sender:
     container_name: email-sender
-    image: aquaprodigy/tracker-email-sender:latest
+    image: danielasd23e2/tracker-email-sender:latest
     env_file:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
 
   frontend:
     container_name: frontend
-    image: aquaprodigy/tracker-frontend:latest
+    image: danielasd23e2/tracker-frontend:latest
     env_file:
       - .env
     ports:
       - "90:90"
-    depends_on:
-      - gateway-service
 
 volumes:
   kafka-data:
